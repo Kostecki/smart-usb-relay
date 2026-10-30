@@ -1,12 +1,8 @@
 # Smart USB Relay — ESP32-H2 SuperMini, ESPHome over Thread.
 # Hardware, pin map and behaviour: ../SPEC.md
-substitutions:
-  name: smart-usb-relay
-  friendly_name: Smart USB Relay
-
 esphome:
-  name: ${name}
-  friendly_name: ${friendly_name}
+  name: smart-usb-relay # unique per box
+  friendly_name: Smart USB Relay
   min_version: 2026.10.0
   on_boot:
     # After the restored select/globals are loaded, apply the power-on behaviour.
