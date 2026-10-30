@@ -1,0 +1,292 @@
+# Smart USB Relay — ESP32-H2 SuperMini, ESPHome over Thread.
+# Hardware, pin map and behaviour: ../SPEC.md
+substitutions:
+  name: smart-usb-relay
+  friendly_name: Smart USB Relay
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.10.0
+  on_boot:
+    # After the restored select/globals are loaded, apply the power-on behaviour.
+    priority: -100
+    then:
+      - lambda: |-
+          const auto option = id(power_on_behavior).current_option();
+          if (option == "Off") {
+            id(output_requested) = false;
+          } else if (option == "On") {
+            id(output_requested) = true;
+          }
+          // "Previous": keep the restored output_requested.
+
+esp32:
+  variant: esp32h2
+  board: esp32-h2-devkitm-1
+  framework:
+    type: esp-idf
+
+logger:
+  level: INFO
+
+network:
+  enable_ipv6: true
+
+openthread:
+  device_type: FTD # mains powered, so a Thread router
+  tlv: !secret thread_tlv
+  force_dataset: true
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    encryption: {} # reuses the api encryption key
+
+status_led:
+  pin: GPIO13 # onboard blue LED, inside the case
+
+i2c:
+  sda: GPIO12
+  scl: GPIO14
+  frequency: 400kHz
+
+globals:
+  - id: output_requested # what the Output switch asks for (restored for "Previous")
+    type: bool
+    restore_value: true
+    initial_value: "false"
+  - id: overcurrent_latched
+    type: bool
+    initial_value: "false"
+  - id: device_attached
+    type: bool
+    initial_value: "false"
+  - id: overcurrent_samples # consecutive INA226 samples above the limit
+    type: int
+    initial_value: "0"
+
+script:
+  - id: trip_overcurrent
+    then:
+      - lambda: |-
+          id(overcurrent_latched) = true;
+          id(output_requested) = false;
+          id(output_enable).turn_off();
+          ESP_LOGW("relay", "Overcurrent: output latched off");
+
+sensor:
+  - platform: ina226
+    address: 0x40
+    shunt_resistance: 0.01 ohm
+    max_current: 3.5A
+    adc_averaging: 16
+    update_interval: 200ms # fast for the software current limit; HA gets 10 s averages
+    current:
+      name: Current
+      id: output_current
+      accuracy_decimals: 3
+      filters:
+        - throttle_average: 10s
+      on_raw_value:
+        - lambda: |-
+            if (id(output_enable).state && x > id(current_limit).state) {
+              if (++id(overcurrent_samples) >= 2) {
+                id(overcurrent_samples) = 0;
+                id(trip_overcurrent).execute();
+              }
+            } else {
+              id(overcurrent_samples) = 0;
+            }
+    power:
+      name: Power
+      id: output_power
+      accuracy_decimals: 2
+      filters:
+        - throttle_average: 10s
+    bus_voltage:
+      name: Voltage
+      accuracy_decimals: 2
+      filters:
+        - throttle_average: 10s
+
+  - platform: integration
+    name: Energy
+    sensor: output_power
+    time_unit: h
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 4
+    restore: true
+    filters:
+      - multiply: 0.001
+
+  # USB-C CC lines and charger voltage, read through 1 kΩ series resistors.
+  - platform: adc
+    id: cc1_in
+    pin: GPIO1
+    attenuation: 12db
+    update_interval: 100ms
+    internal: true
+  - platform: adc
+    id: cc2_in
+    pin: GPIO2
+    attenuation: 12db
+    update_interval: 100ms
+    internal: true
+  - platform: adc
+    id: cc1_out
+    pin: GPIO3
+    attenuation: 12db
+    update_interval: 100ms
+    internal: true
+  - platform: adc
+    id: cc2_out
+    pin: GPIO4
+    attenuation: 12db
+    update_interval: 100ms
+    internal: true
+  - platform: adc
+    name: Charger voltage
+    pin: GPIO5
+    attenuation: 12db
+    update_interval: 1s
+    accuracy_decimals: 2
+    entity_category: diagnostic
+    filters:
+      - multiply: 2.0 # 100k/100k divider
+      - throttle_average: 10s
+
+binary_sensor:
+  - platform: gpio
+    id: hw_fault # TPS2557 FAULT and INA226 ALERT, open drain, 10 kΩ pull-up
+    pin:
+      number: GPIO0
+      inverted: true
+    internal: true
+    filters:
+      - delayed_on: 20ms # on top of the TPS2557's own 6-13 ms deglitch
+    on_press:
+      - script.execute: trip_overcurrent
+  - platform: template
+    name: Device attached
+    lambda: return id(device_attached);
+  - platform: template
+    name: Output powered
+    device_class: power
+    lambda: return id(output_enable).state;
+  - platform: template
+    name: Overcurrent tripped
+    device_class: problem
+    lambda: return id(overcurrent_latched);
+
+text_sensor:
+  - platform: template
+    id: charger_current
+    name: Charger advertised current
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: device_current
+    name: Advertised to device
+    entity_category: diagnostic
+    update_interval: never
+
+switch:
+  - platform: gpio
+    id: output_enable # TPS2557 EN, 100 kΩ pull-down keeps it off during boot
+    pin: GPIO10
+    internal: true
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    id: rp_3a # Q1 gate, active low: adds the 3 A Rp on CC_OUT
+    pin:
+      number: GPIO11
+      inverted: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+  - platform: template
+    name: Output
+    id: output_switch
+    icon: mdi:power-socket-eu
+    lambda: return id(output_requested);
+    turn_on_action:
+      - lambda: |-
+          id(overcurrent_latched) = false;
+          id(output_requested) = true;
+    turn_off_action:
+      - lambda: id(output_requested) = false;
+  - platform: template
+    name: Force output
+    id: force_output # for cables without Rd (bare USB-C to barrel/wire)
+    icon: mdi:power-plug-outline
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+select:
+  - platform: template
+    name: Power-on behavior
+    id: power_on_behavior
+    entity_category: config
+    options: ["Off", "On", "Previous"]
+    initial_option: "Off"
+    optimistic: true
+    restore_value: true
+
+number:
+  - platform: template
+    name: Current limit
+    id: current_limit
+    entity_category: config
+    unit_of_measurement: A
+    min_value: 0.5
+    max_value: 3.5
+    step: 0.1
+    initial_value: 3.0
+    optimistic: true
+    restore_value: true
+    mode: box
+
+button:
+  - platform: restart
+    name: Restart
+    entity_category: config
+
+interval:
+  - interval: 100ms
+    then:
+      - lambda: |-
+          // Charger side: our 5.1 kΩ Rd against the charger's Rp (USB Type-C vRd thresholds).
+          const float cc_in = std::max(id(cc1_in).state, id(cc2_in).state);
+          const char *charger = cc_in >= 1.23f ? "3 A" : cc_in >= 0.66f ? "1.5 A" : cc_in >= 0.2f ? "Default" : "Unknown";
+          if (id(charger_current).state != charger) id(charger_current).publish_state(charger);
+
+          // Advertise 3 A to the device only when the charger offers 3 A.
+          const bool want_3a = cc_in >= 1.23f;
+          if (id(rp_3a).state != want_3a) {
+            if (want_3a) id(rp_3a).turn_on(); else id(rp_3a).turn_off();
+          }
+          const char *advertised = want_3a ? "3 A" : "1.5 A";
+          if (id(device_current).state != advertised) id(device_current).publish_state(advertised);
+
+          // Device side: our Rp to 3V3 against the device's 5.1 kΩ Rd. Below the window is
+          // Ra (e-marked cable) or nothing; above it the line is open (pulled up to 3V3).
+          const float lo = id(rp_3a).state ? 0.80f : 0.40f;
+          const float hi = id(rp_3a).state ? 2.60f : 1.60f;
+          auto is_rd = [&](float v) { return v >= lo && v <= hi; };
+          const bool rd_now = is_rd(id(cc1_out).state) || is_rd(id(cc2_out).state);
+          // Attach after 2 consecutive reads (~200 ms debounce), detach immediately.
+          static int attach_reads = 0;
+          attach_reads = rd_now ? std::min(attach_reads + 1, 2) : 0;
+          id(device_attached) = attach_reads >= 2;
+
+          const bool power = id(output_requested) && !id(overcurrent_latched) &&
+                             (id(device_attached) || id(force_output).state);
+          if (power != id(output_enable).state) {
+            if (power) id(output_enable).turn_on(); else id(output_enable).turn_off();
+          }
