@@ -19,9 +19,14 @@ The full design, every decision behind it, and the pre-order checklist are in [S
 
 ## Firmware
 
-1. Copy `firmware/secrets.example.yaml` to `firmware/secrets.yaml` (git-ignored) and fill in the Thread dataset from Home Assistant and an API key.
-2. Flash the SuperMini over its own USB-C **before** fitting it to the board: `esphome run firmware/smart-usb-relay.yaml` (or via the ESPHome dashboard).
-3. It joins your Thread network as a router and Home Assistant discovers it. Later updates go over the air.
+The config lives in the Home Assistant ESPHome dashboard (ESPHome 2026.10.0 or newer) and is edited there. `firmware/smart-usb-relay.yaml` is a copy, updated by hand when the behaviour changes.
+
+1. In the dashboard's **Secrets**, add `thread_tlv` (Settings → Devices & services → Thread → Configure → (i) on the preferred network → "Active dataset TLVs") and `api_encryption_key` (`openssl rand -base64 32`; it also encrypts OTA). See `firmware/secrets.example.yaml`.
+2. Create a new device, skip the Wi-Fi questions, and replace its YAML with `firmware/smart-usb-relay.yaml`. For a second box, change `name` and `friendly_name` under `substitutions`.
+3. Flash the SuperMini over its own USB-C **before** fitting it to the board: **Install → Plug into this computer** (Chrome or Edge). If the port doesn't show up, hold BOOT while plugging it in.
+4. It joins your Thread network as a router and Home Assistant discovers it. Later updates: **Install → Wirelessly**.
+
+Before it's on the board, the ADC pins float, so "Device attached" and the charger readings are meaningless.
 
 Entities: Output, Device attached, Output powered, Overcurrent tripped, Voltage, Current, Power, Energy, Charger voltage, Charger advertised current, Advertised to device; config: Power-on behavior, Force output, Current limit.
 
