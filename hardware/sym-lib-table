@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "Smart_USB_Relay")(type "KiCad")(uri "${KIPRJMOD}/Smart_USB_Relay.kicad_sym")(options "")(descr ""))
+)

@@ -1,0 +1,18 @@
+# KiCad
+*-backups/
+*.kicad_prl
+*.lck
+fp-info-cache
+_autosave-*
+\#auto_saved_files\#
+.mcp-backups/
+.history/
+
+# JLC order files, built by scripts/fab.sh (and CI)
+fab/
+
+# ESPHome
+firmware/.esphome/
+firmware/secrets.yaml
+
+.DS_Store

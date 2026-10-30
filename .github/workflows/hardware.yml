@@ -1,0 +1,40 @@
+name: Hardware
+
+on:
+  push:
+    paths:
+      - "hardware/**"
+      - "scripts/fab.sh"
+      - ".github/workflows/hardware.yml"
+  pull_request:
+    paths:
+      - "hardware/**"
+      - "scripts/fab.sh"
+      - ".github/workflows/hardware.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fab:
+    name: ERC, DRC and JLC files
+    runs-on: ubuntu-latest
+    container:
+      # Same KiCad version as used to edit the design
+      image: kicad/kicad:10.0.7
+      options: --user root
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check design and build order files
+        run: scripts/fab.sh
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: smart-usb-relay-fab-${{ github.sha }}
+          path: fab/
+          if-no-files-found: error
