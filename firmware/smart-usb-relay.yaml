@@ -19,7 +19,7 @@ esphome:
 
 esp32:
   variant: esp32h2
-  board: esp32-h2-devkitm-1
+  flash_size: 4MB # SuperMini: ESP32-H2 with 4 MB in-package flash
   framework:
     type: esp-idf
 
