@@ -49,7 +49,7 @@ Only the two edge rows are used; the interior pads (GPIO22, 25, 26, 27) and B+/B
 
 | Ref | Part | LCSC | Notes |
 |---|---|---|---|
-| J1, J2 | HRO TYPE-C-31-M-17 | C283540 | 5 A, 6-pin; KiCad stock footprint (LCSC one has non-USB pad names) |
+| J1, J2 | HRO TYPE-C-31-M-17 | C283540 | 5 A, 6-pin; KiCad stock footprint (LCSC one has non-USB pad names). Its origin is 1.25 mm from JLC's, so `scripts/fab.sh` shifts the CPL position (verified in JLC's assembly preview) |
 | U2 | TPS2557DRBR | C130056 | R8 = 33 kΩ → limit 3.03 A min / ~3.35 A typ / 3.6 A max; FAULT deglitch 6–13 ms |
 | U3 | INA226AIDGSR | C49851 | A0/A1 = GND → 0x40 |
 | RS1 | Vishay WSLP2512R0100FEA, 10 mΩ 1 % | C241862 | |

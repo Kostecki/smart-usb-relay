@@ -35,9 +35,17 @@ echo "== BOM (JLC format)"
 echo "== CPL (JLC format)"
 "$KICAD_CLI" pcb export pos -o "$OUT/pos.csv" --format csv --units mm --side front "$PCB"
 python3 - "$OUT/pos.csv" "$OUT/$NAME-bom.csv" "$OUT/$NAME-cpl.csv" <<'EOF'
-import csv, sys
+import csv, math, sys
 
 pos_path, bom_path, cpl_path = sys.argv[1:]
+# JLC places its own (LCSC/EasyEDA) model on its own origin. Where our KiCad footprint's
+# origin differs, shift the placement: offset in the footprint's local axes (mm, KiCad
+# y-down) from our origin to JLC's.
+ORIGIN_OFFSETS = {
+    # HRO TYPE-C-31-M-17 (C283540): LCSC origin is 1.25 mm towards the back of the
+    # connector (shell holes at y -3.0/0.8 in KiCad vs -1.75/2.05 in LCSC).
+    "USB_C_Receptacle_HRO_TYPE-C-31-M-17": (0.0, -1.25),
+}
 # Only parts JLC places: anything in the BOM (U1, test pads and holes are excluded there).
 with open(bom_path, newline="") as f:
     placed = {ref for row in csv.DictReader(f) for ref in row["Designator"].split(",") if ref}
@@ -46,8 +54,14 @@ with open(pos_path, newline="") as f, open(cpl_path, "w", newline="") as out:
     w.writerow(["Designator", "Mid X", "Mid Y", "Layer", "Rotation"])
     rows = [r for r in csv.DictReader(f) if r["Ref"] in placed]
     for r in rows:
-        w.writerow([r["Ref"], f'{float(r["PosX"]):.3f}mm', f'{float(r["PosY"]):.3f}mm',
-                    "Top" if r["Side"] == "top" else "Bottom", f'{float(r["Rot"]):.1f}'])
+        x, y, rot = float(r["PosX"]), float(r["PosY"]), float(r["Rot"])
+        dx, dy = ORIGIN_OFFSETS.get(r["Package"], (0.0, 0.0))
+        a = math.radians(rot)
+        # Rotate into board axes (KiCad, y-down), then flip y for the position file (y-up).
+        x += dx * math.cos(a) + dy * math.sin(a)
+        y -= -dx * math.sin(a) + dy * math.cos(a)
+        w.writerow([r["Ref"], f"{x:.3f}mm", f"{y:.3f}mm",
+                    "Top" if r["Side"] == "top" else "Bottom", f"{rot:.1f}"])
 missing = placed - {r["Ref"] for r in rows}
 if missing:
     sys.exit(f"BOM parts missing from the position file: {sorted(missing)}")
