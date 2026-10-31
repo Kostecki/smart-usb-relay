@@ -4106,7 +4106,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C13612"
+		(property "LCSC" "C85364"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -5340,7 +5340,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C13612"
+		(property "LCSC" "C85364"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)

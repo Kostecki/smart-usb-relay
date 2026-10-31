@@ -55,7 +55,7 @@ Only the two edge rows are used; the interior pads (GPIO22, 25, 26, 27) and B+/B
 | RS1 | Vishay WSLP2512R0100FEA, 10 mΩ 1 % | C241862 | |
 | F1 | JFC1206-1500FS, 5 A fast | C136351 | |
 | D1 | SMF6.0A (unidirectional) | C19077499 | JLC Preferred (no setup fee) |
-| D2, D4 | SRV05-4 | C13612 | D2 VP → VBUS_IN; **D4 VP → +3V3** (on VBUS_OUT it would back-feed the off output to ~2.7 V through Rp) |
+| D2, D4 | SRV05-4 (SRV05-4-P-T7) | C85364 | JLC Preferred (no setup fee), same footprint as C13612; D2 VP → VBUS_IN; **D4 VP → +3V3** (on VBUS_OUT it would back-feed the off output to ~2.7 V through Rp) |
 | D3 | B5819W | C8598 | Basic |
 | Q1 | AO3401A | C15127 | Basic; 3 A Rp switch |
 | C1, C5 | 10 µF 25 V 0805 | C15850 | C5 (output) raised from 1 µF |
