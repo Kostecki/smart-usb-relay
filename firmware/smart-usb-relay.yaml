@@ -1,3 +1,6 @@
+# Board: Generic ESP32-H2 Board (Generic)
+# Definition: definitions/boards/generic-esp32h2/manifest.yaml
+
 # Smart USB Relay — ESP32-H2 SuperMini, ESPHome over Thread.
 # Hardware, pin map and behaviour: ../SPEC.md
 esphome:
@@ -36,8 +39,7 @@ openthread:
 
 api:
   encryption:
-    key: !secret api_encryption_key
-
+    key: !secret smart_usb_relay__api_encryption_key
 ota:
   - platform: esphome
     encryption: {} # reuses the api encryption key
