@@ -8198,7 +8198,7 @@
 				(justify bottom)
 			)
 		)
-		(property "Footprint" "Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-17"
+		(property "Footprint" "Smart_USB_Relay:USB_C_Receptacle_HRO_TYPE-C-31-M-17"
 			(at 267.97 129.54 0)
 			(hide yes)
 			(show_name no)
@@ -8879,7 +8879,7 @@
 				(justify bottom)
 			)
 		)
-		(property "Footprint" "Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-17"
+		(property "Footprint" "Smart_USB_Relay:USB_C_Receptacle_HRO_TYPE-C-31-M-17"
 			(at 34.29 52.07 0)
 			(hide yes)
 			(show_name no)

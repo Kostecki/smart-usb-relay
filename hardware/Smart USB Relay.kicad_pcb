@@ -484,7 +484,7 @@
 		)
 		(embedded_fonts no)
 	)
-	(footprint "Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-17"
+	(footprint "Smart_USB_Relay:USB_C_Receptacle_HRO_TYPE-C-31-M-17"
 		(layer "F.Cu")
 		(uuid "215bb044-6b9b-45bc-abbc-7b284cdc4a66")
 		(at 157.1 115 90)
@@ -782,15 +782,15 @@
 			(uuid "4dc36f37-a073-4d31-8771-118de05b1819")
 		)
 		(embedded_fonts no)
-		(model "${KICAD10_3DMODEL_DIR}/Connector_USB.3dshapes/USB_C_Receptacle_HRO_TYPE-C-31-M-17.step"
+		(model "${KIPRJMOD}/lcsc/LCSC.3dshapes/TYPE-C-SMD_6P-L8.9-W6.8-H3.2-P1.00.step"
 			(offset
-				(xyz 0 0 0)
+				(xyz 0 -0.8 0)
 			)
 			(scale
 				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz 0 0 0)
+				(xyz 0 0 180)
 			)
 		)
 	)
@@ -2228,7 +2228,7 @@
 			)
 		)
 	)
-	(footprint "Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-17"
+	(footprint "Smart_USB_Relay:USB_C_Receptacle_HRO_TYPE-C-31-M-17"
 		(layer "F.Cu")
 		(uuid "587267d5-bdb3-454a-9ef5-d40d55fd49b9")
 		(at 102.9 115 -90)
@@ -2526,15 +2526,15 @@
 			(uuid "c283e1a4-ce15-4b4f-8b03-363bd6111def")
 		)
 		(embedded_fonts no)
-		(model "${KICAD10_3DMODEL_DIR}/Connector_USB.3dshapes/USB_C_Receptacle_HRO_TYPE-C-31-M-17.step"
+		(model "${KIPRJMOD}/lcsc/LCSC.3dshapes/TYPE-C-SMD_6P-L8.9-W6.8-H3.2-P1.00.step"
 			(offset
-				(xyz 0 0 0)
+				(xyz 0 -0.8 0)
 			)
 			(scale
 				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz 0 0 0)
+				(xyz 0 0 180)
 			)
 		)
 	)
